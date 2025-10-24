@@ -1,0 +1,242 @@
+{% extends 'socialmedia_app/base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }} - Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Profile Header -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="img-fluid rounded-circle mb-3" width="150" height="150">
+                    </div>
+                    <div class="col-md-9">
+                        <h2>{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+                        <p class="text-muted">@{{ profile_user.username }}</p>
+                        
+                        {% if profile.bio %}
+                        <p class="mb-3">{{ profile.bio }}</p>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>{{ profile_user.posts.count }}</strong><br>
+                                <small class="text-muted">Posts</small>
+                            </div>
+                            <div class="col-4">
+                                <strong id="followers-count">{{ profile.followers_count }}</strong><br>
+                                <small class="text-muted">Followers</small>
+                            </div>
+                            <div class="col-4">
+                                <strong id="following-count">{{ profile.following_count }}</strong><br>
+                                <small class="text-muted">Following</small>
+                            </div>
+                        </div>
+                        
+                        {% if user.is_authenticated and user != profile_user %}
+                        <button type="button" class="btn btn-primary follow-btn" data-username="{{ profile_user.username }}">
+                            <i class="fas fa-user-plus"></i>
+                            <span class="follow-text">
+                                {% if is_following %}Unfollow{% else %}Follow{% endif %}
+                            </span>
+                        </button>
+                        {% elif user == profile_user %}
+                        <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Posts -->
+        <h4>Posts</h4>
+        {% for post in posts %}
+        <div class="card mb-3 post-card" data-post-id="{{ post.id }}">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ post.author.profile.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" width="40" height="40">
+                    <div>
+                        <h6 class="mb-0">
+                            <a href="{% url 'profile' post.author.username %}" class="text-decoration-none">
+                                {{ post.author.username }}
+                            </a>
+                        </h6>
+                        <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                    </div>
+                </div>
+                
+                <p class="card-text">{{ post.content }}</p>
+                
+                {% if post.image %}
+                <img src="{{ post.image.url }}" alt="Post image" class="img-fluid rounded mb-3">
+                {% endif %}
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm like-btn" data-post-id="{{ post.id }}">
+                            <i class="fas fa-heart"></i>
+                            <span class="likes-count">{{ post.likes_count }}</span>
+                        </button>
+                        <a href="{% url 'post_detail' post.pk %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-comment"></i> {{ post.comments_count }}
+                        </a>
+                    </div>
+                    
+                    {% if post.author == user %}
+                    <a href="{% url 'delete_post' post.pk %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this post?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">No posts yet</h5>
+                <p class="card-text">This user hasn't shared anything yet.</p>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Posts pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">&laquo; First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Sidebar -->
+        {% if user.is_authenticated %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h6 class="text-primary">{{ user.profile.followers_count }}</h6>
+                        <small class="text-muted">Followers</small>
+                    </div>
+                    <div class="col-4">
+                        <h6 class="text-primary">{{ user.profile.following_count }}</h6>
+                        <small class="text-muted">Following</small>
+                    </div>
+                    <div class="col-4">
+                        <h6 class="text-primary">{{ user.posts.count }}</h6>
+                        <small class="text-muted">Posts</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Like functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const likeButtons = document.querySelectorAll('.like-btn');
+    
+    likeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const heartIcon = this.querySelector('i');
+            const likesCount = this.querySelector('.likes-count');
+            
+            fetch('{% url "toggle_like" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    post_id: postId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                likesCount.textContent = data.likes_count;
+                if (data.liked) {
+                    heartIcon.classList.add('text-danger');
+                } else {
+                    heartIcon.classList.remove('text-danger');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    // Follow functionality
+    const followButton = document.querySelector('.follow-btn');
+    if (followButton) {
+        followButton.addEventListener('click', function() {
+            const username = this.dataset.username;
+            const followText = this.querySelector('.follow-text');
+            
+            fetch('{% url "toggle_follow" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    username: username
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                followText.textContent = data.following ? 'Unfollow' : 'Follow';
+                document.getElementById('followers-count').textContent = data.followers_count;
+                document.getElementById('following-count').textContent = data.following_count;
+                
+                if (data.following) {
+                    this.classList.remove('btn-primary');
+                    this.classList.add('btn-outline-primary');
+                } else {
+                    this.classList.remove('btn-outline-primary');
+                    this.classList.add('btn-primary');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    }
+});
+</script>
+{% endblock %}

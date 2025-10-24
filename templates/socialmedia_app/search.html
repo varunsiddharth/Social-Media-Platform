@@ -1,0 +1,73 @@
+{% extends 'socialmedia_app/base.html' %}
+{% load static %}
+
+{% block title %}Search Users - Social Media Platform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4><i class="fas fa-search"></i> Search Users</h4>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Search by username, first name, or last name...">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+
+                {% if query %}
+                <h5>Search Results for "{{ query }}"</h5>
+                {% if users %}
+                <div class="row">
+                    {% for user_result in users %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ user_result.profile.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" width="50" height="50">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">
+                                            <a href="{% url 'profile' user_result.username %}" class="text-decoration-none">
+                                                {{ user_result.get_full_name|default:user_result.username }}
+                                            </a>
+                                        </h6>
+                                        <p class="text-muted mb-0">@{{ user_result.username }}</p>
+                                        {% if user_result.profile.bio %}
+                                        <small class="text-muted">{{ user_result.profile.bio|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        <a href="{% url 'profile' user_result.username %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-user"></i> View Profile
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                    <h5>No users found</h5>
+                    <p class="text-muted">Try searching with different keywords.</p>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                    <h5>Search for Users</h5>
+                    <p class="text-muted">Enter a username, first name, or last name to find users.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
